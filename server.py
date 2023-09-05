@@ -17,14 +17,10 @@ from concurrent.futures import Future
 
 # Global functions
 def gen_token(size=24) -> str:
-    generated = "".join(
-        [
-            random.choice(
-                string.ascii_uppercase + string.ascii_lowercase + string.digits
-            )
-            for n in range(size)
-        ]
-    )
+    generated = "".join([
+        random.choice(string.ascii_uppercase + string.ascii_lowercase +
+                      string.digits) for n in range(size)
+    ])
     return generated
 
 
@@ -38,11 +34,11 @@ def call_with_future(fn, future, args, kwargs) -> None:
 
 # Annotations
 def threaded(fn):
+
     def wrapper(*args, **kwargs) -> Future:
         future = Future()
-        threading.Thread(
-            target=call_with_future, args=(fn, future, args, kwargs)
-        ).start()
+        threading.Thread(target=call_with_future,
+                         args=(fn, future, args, kwargs)).start()
         return future
 
     return wrapper
@@ -59,6 +55,7 @@ if SERVER_REQUIRE_AUTH:
 # Based on osid alary `senrev` class
 # This is mostly it but formatted
 class SockSendRecv:
+
     def __init__(self, sock: socket.socket) -> None:
         self.sock = sock
 
@@ -94,6 +91,7 @@ class SockSendRecv:
 
 
 class Logger:
+
     def __init__(self, tag: str) -> None:
         self.tag = tag
 
@@ -105,14 +103,13 @@ class Logger:
 
     def err(self, msg) -> None:
         print(f"{self.tag}", "[E]:", msg)
-    
-    
+
 
 class Server:
+
     def __init__(self, ip: str, port: int) -> None:
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.setsockopt(
-            socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             self.server_socket.bind((ip, port))
         except OSError as e:
@@ -149,6 +146,7 @@ class Server:
 
 
 class ServerClient:
+
     def __init__(self, client_socket: socket.socket, client_addr) -> None:
         self.logger = Logger(f"{client_addr[0]}:{client_addr[1]}")
 
@@ -185,10 +183,9 @@ class ServerClient:
 
             self.logger.info("Sending connected packet")
             self.sock_senrev.send("/connected".encode())
-            if self.sock_senrev.wait_for_packet(
-                    "/received_connected".encode()):
+            if self.sock_senrev.wait_for_packet("/received_connected".encode()):
                 self.logger.info("Client received connected packet")
-                
+
                 self.logger.info("Sending current WD")
                 self.sock_senrev.send(
                     f"/cwd_changed {self.current_wd}".encode())
@@ -196,8 +193,7 @@ class ServerClient:
                 self.is_connected = True
                 self.start()
             else:
-                self.logger.err(
-                    "Client did not respond to connected packet...")
+                self.logger.err("Client did not respond to connected packet...")
 
     def start(self) -> None:
         if not self.is_running and self.is_connected:
@@ -232,8 +228,7 @@ class ServerClient:
                     if not arg:
                         self.logger.warn("No argument provided, return")
                         self.sock_senrev.send(
-                            "/cmd requires 1 argument, received zero".encode()
-                        )
+                            "/cmd requires 1 argument, received zero".encode())
                     else:
                         self.logger.info(f"Executing {arg}!")
                         arg = arg.split(" ")
@@ -253,7 +248,8 @@ class ServerClient:
                         except Exception as e:
                             self.logger.err(f"Exception! {type(e)}: {e}")
                             self.sock_senrev.send(
-                                f"Caught an exception before executing process: {e}".encode())
+                                f"Caught an exception before executing process: {e}"
+                                .encode())
                 elif "/cd" in command_in:
                     self.logger.info("/cd command invoked!")
 
@@ -262,8 +258,7 @@ class ServerClient:
                     if not arg:
                         self.logger.warn("No argument provided, returning")
                         self.sock_senrev.send(
-                            "/cd requires 1 argument, received zero".encode()
-                        )
+                            "/cd requires 1 argument, received zero".encode())
                     else:
                         self.logger.info(f"Chdir'ing to {arg}!")
                         arg = arg.split(" ")
@@ -275,29 +270,29 @@ class ServerClient:
                                 self.logger.info(
                                     f"Chdir'ed to {self.current_wd}")
                                 self.sock_senrev.send(
-                                    f"/cwd_changed {self.current_wd}".encode()
-                                )
+                                    f"/cwd_changed {self.current_wd}".encode())
                             except FileNotFoundError:
                                 self.sock_senrev.send(
-                                    f"Directory {arg[0]} doesn't exists!".encode())
+                                    f"Directory {arg[0]} doesn't exists!".
+                                    encode())
                             except NotADirectoryError:
                                 self.sock_senrev.send(
-                                    f"{arg[0]} is not a directory!".encode()
-                                )
+                                    f"{arg[0]} is not a directory!".encode())
                             except Exception as e:
                                 self.logger.err(f"Exception! {type(e)}: {e}")
                                 self.sock_senrev.send(
-                                    f"Caught an exception before running `os.chdir()`: {e}".encode())
+                                    f"Caught an exception before running `os.chdir()`: {e}"
+                                    .encode())
                         else:
                             self.logger.warn(
                                 f"{len(arg)} argument provided, returning")
                             self.sock_senrev.send(
-                                f"/cd requires 1 argument, received {len(arg)}".encode())
+                                f"/cd requires 1 argument, received {len(arg)}".
+                                encode())
                 else:
                     self.logger.warn(f"{command_in} is not a command")
                     self.sock_senrev.send(
-                        f"{command_in} is not a valid command!".encode()
-                    )
+                        f"{command_in} is not a valid command!".encode())
 
                 self.end_block_input()
 

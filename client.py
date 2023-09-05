@@ -13,17 +13,19 @@ import threading
 
 # Annotations
 def threaded(fn):
+
     def wrapper(*args, **kwargs) -> threading.Thread:
         thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
         thread.start()
         return thread
-        
+
     return wrapper
 
 
 # Based on osid alary `senrev` class
 # This is mostly it but formatted
 class SockSendRecv:
+
     def __init__(self, sock: socket.socket) -> None:
         self.sock = sock
 
@@ -59,6 +61,7 @@ class SockSendRecv:
 
 
 class Logger:
+
     def __init__(self, tag: str) -> None:
         self.tag = tag
 
@@ -73,12 +76,12 @@ class Logger:
 
 
 class Client:
+
     def __init__(self) -> None:
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_senrev = SockSendRecv(self.client_socket)
-        self.logger = Logger(
-            ":".join(str(elem) for elem in self.client_socket.getsockname())
-        )
+        self.logger = Logger(":".join(
+            str(elem) for elem in self.client_socket.getsockname()))
 
         self.server_msg_running = False
         self.block_input = False
@@ -101,7 +104,7 @@ class Client:
                 else:
                     self.logger.err("Wrong token!")
                     exit(1)
-            
+
             if welcome_packet == "/connected".encode():
                 self.logger.info("Received connected packet")
                 self.sock_senrev.send("/received_connected".encode())
@@ -110,7 +113,8 @@ class Client:
                 self.logger.err("Server did not send a connected packet...")
                 exit(1)
         except (ConnectionResetError, ConnectionRefusedError):
-            self.logger.err(f"Can't connect to {ip}:{port} is the server is running?")
+            self.logger.err(
+                f"Can't connect to {ip}:{port} is the server is running?")
         except KeyboardInterrupt:
             self.logger.info("Catching interrupt and exiting")
             self.stop()
@@ -148,8 +152,7 @@ class Client:
                     self.block_input = False
                 elif "/cwd_changed" in server_message:
                     self.server_cwd = server_message.replace(
-                        "/cwd_changed", "", 1
-                    ).strip()
+                        "/cwd_changed", "", 1).strip()
                 elif server_message == "/server_shutdown":
                     print("Server shutting down!")
                     self.stop()
