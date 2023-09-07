@@ -13,7 +13,6 @@ import subprocess
 import random
 import string
 import sys
-from concurrent.futures import Future
 
 
 # Global functions
